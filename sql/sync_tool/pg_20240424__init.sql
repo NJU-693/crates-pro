@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS "repo_sync_status" (
   "err_message" TEXT,
   "created_at" TIMESTAMP NOT NULL,
   "updated_at" TIMESTAMP NOT NULL,
+  "version" TEXT NOT NULL,
   CONSTRAINT uniq_repo_name UNIQUE (crate_name)
 );

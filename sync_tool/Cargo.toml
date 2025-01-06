@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-storage = { path = "storage" }
 entity = { path = "storage/entity" }
 kafka_model = { path = "kafka_model" }
 
@@ -33,6 +32,7 @@ tar = "0.4.41"
 flate2 = "1.0.30"
 git2 = "0.19.0"
 serde_json = "1.0.120"
+semver = "1.0.24"
 
 [[bin]]
 name = "sync_tool"   # 设置编译后的二进制文件名称

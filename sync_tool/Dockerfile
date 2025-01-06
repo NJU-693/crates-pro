@@ -1,6 +1,6 @@
 FROM rust:latest AS builder
 
-# 安装构建依赖
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     pkg-config \
@@ -8,24 +8,40 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libz-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制源码并构建
+# 创建一个用户 rustuser   确保和宿主机的用户id一致
+RUN useradd -m -u 1000 rustuser
+
 COPY . /sync_tool
 WORKDIR /sync_tool
+
+# 更改文件的所有权
+RUN chown -R rustuser:rustuser /sync_tool
+
+# 切换到 rustuser 用户
+USER rustuser
+
 RUN cargo build --release
 
-# 使用 debian 镜像作为运行时环境
 FROM debian:latest
 
-# 安装运行时依赖
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libz-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制构建的二进制文件
+# 创建一个用户 rustuser 确保和宿主机的用户id一致
+RUN useradd -m -u 1000 rustuser
+
 COPY --from=builder /sync_tool /workspace
 
-WORKDIR /workspace
-# 设置默认命令
-CMD ["bin/bash"]
+# 更改文件的所有权
+RUN chown -R rustuser:rustuser /workspace
+# 切换到 rustuser 用户
+USER rustuser
+
+WORKDIR /workspace/target/release
+
+CMD ["/bin/bash"]
 
