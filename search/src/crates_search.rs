@@ -1,3 +1,4 @@
+use semver::Version;
 use std::env;
 use tokio_postgres::Client as PgClient;
 
@@ -79,12 +80,24 @@ fn gen_search_sql(table_name: &str, sort_by: SearchSortCriteria) -> String {
 }
 
 fn sort_crates(crate_vec: &mut [RecommendCrate]) {
+    let version_cmp = |a: &RecommendCrate, b: &RecommendCrate| {
+        let version_a = Version::parse(&a.max_version);
+        let version_b = Version::parse(&b.max_version);
+
+        match (version_a, version_b) {
+            (Ok(ver_a), Ok(ver_b)) => ver_b.cmp(&ver_a),
+            (Ok(_), Err(_)) => std::cmp::Ordering::Less,
+            (Err(_), Ok(_)) => std::cmp::Ordering::Greater,
+            (Err(_), Err(_)) => std::cmp::Ordering::Equal,
+        }
+    };
+
     crate_vec.sort_by(|a, b| {
         b.rank
             .partial_cmp(&a.rank)
             .unwrap_or(std::cmp::Ordering::Equal)
             .then_with(|| a.name.cmp(&b.name))
-            .then_with(|| b.max_version.cmp(&a.max_version))
+            .then_with(|| version_cmp(a, b))
     });
 }
 
@@ -101,7 +114,6 @@ fn rearrange_crates(crates: &mut Vec<RecommendCrate>, keyword: &str) {
     sort_crates(&mut matching_crates);
     crates.splice(0..0, matching_crates);
 }
-
 
 async fn search_crate_without_ai(
     client: &PgClient,
